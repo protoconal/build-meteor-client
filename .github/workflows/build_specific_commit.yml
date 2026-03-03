@@ -36,32 +36,42 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          
+
       - name: Read Minecraft version
         id: mc
         shell: bash
         run: |
           MC_VERSION="$(node -e "import { getMcVersion } from './.github/builds/mc_version.js'; const v = await getMcVersion(); process.stdout.write(v);")"
           echo "mc_version=$MC_VERSION" >> "$GITHUB_OUTPUT"
-      
-      - name: Create tag name
-        id: vars
+
+      - name: Capture commit info + tag
+        id: commit
         shell: bash
         run: |
-          shortsha="$(echo "${inputs.refToBuild}" | cut -c1-7)"
-          echo "tag=build-mc${{ steps.mc.outputs.mc_version }}-$shortsha" >> "$GITHUB_OUTPUT"
+          sha="$(git rev-parse HEAD)"
+          shortsha="$(git rev-parse --short=7 HEAD)"
+          tag="build-mc${{ steps.mc.outputs.mc_version }}-$shortsha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "shortsha=$shortsha" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+      - name: Build date
+        id: prep
+        shell: bash
+        run: echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+  
       - name: Build
         run: ./gradlew build -Pcommit=${{ inputs.refToBuild }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.vars.outputs.tag }}
-          name: Meteor Client (MC ${{ steps.mc.outputs.mc_version }}) — ${{ steps.vars.outputs.tag }}
+          tag_name: ${{ steps.commit.outputs.tag }}
+          name: Meteor Client (MC ${{ steps.mc.outputs.mc_version }}) — ${{ steps.commit.outputs.tag }}
           generate_release_notes: true
           files: build/libs/*
           body: |
             Automated Meteor build release
-            - Commit: ${{ inputs.refToBuild }}
+            - Input ref: ${{ inputs.refToBuild }}
+            - Checked-out commit: ${{ steps.commit.outputs.sha }}
             - Build date: ${{ steps.prep.outputs.build_date }}
