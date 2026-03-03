@@ -48,11 +48,11 @@ jobs:
         id: vars
         shell: bash
         run: |
-          shortsha="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+          shortsha="$(echo "${inputs.refToBuild}" | cut -c1-7)"
           echo "tag=build-mc${{ steps.mc.outputs.mc_version }}-$shortsha" >> "$GITHUB_OUTPUT"
 
       - name: Build
-        run: ./gradlew build -Pcommit=${{ github.sha }}
+        run: ./gradlew build -Pcommit=${{ inputs.refToBuild }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -63,5 +63,5 @@ jobs:
           files: build/libs/*
           body: |
             Automated Meteor build release
-            - Commit: ${{ github.sha }}
+            - Commit: ${{ inputs.refToBuild }}
             - Build date: ${{ steps.prep.outputs.build_date }}
