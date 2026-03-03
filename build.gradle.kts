@@ -1,3 +1,12 @@
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
+allprojects {
+  tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+  }
+}
+
 plugins {
     alias(libs.plugins.fabric.loom)
     id("maven-publish")
