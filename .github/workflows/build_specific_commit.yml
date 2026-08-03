@@ -67,9 +67,35 @@ jobs:
         run: |
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
-      - name: Build
-        run: ./gradlew build -Pcommit=${{ steps.commit.outputs.sha }}
+      - name: Configure Modrinth repository
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/modrinth.init.gradle" <<'EOF'
+          allprojects {
+              repositories {
+                  exclusiveContent {
+                      forRepository {
+                          maven {
+                              name = "Modrinth"
+                              url = uri("https://api.modrinth.com/maven")
+                          }
+                      }
 
+                      filter {
+                          includeGroup("maven.modrinth")
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: Build
+        run: |
+          ./gradlew build \
+            --init-script "$RUNNER_TEMP/modrinth.init.gradle" \
+            --refresh-dependencies \
+            -Pcommit=${{ steps.commit.outputs.sha }}
+            
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
