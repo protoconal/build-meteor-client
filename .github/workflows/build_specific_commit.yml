@@ -89,12 +89,10 @@ jobs:
 
               configurations.configureEach {
                   resolutionStrategy.dependencySubstitution {
-                      substitute module(
-                          "maven.modrinth:lithium:mc1.21.1-0.14.0-beta.1"
-                      ) using module(
-                          "maven.modrinth:lithium:mc1.21.1-0.14.0-beta.1-fabric"
+                      substitute module("maven.modrinth:lithium") using module(
+                          "maven.modrinth:gvQqBUqZ:2mbrKlX3"
                       ) because(
-                          "The original coordinate omits the Modrinth loader suffix"
+                          "Use the exact Modrinth project and version IDs"
                       )
                   }
               }
