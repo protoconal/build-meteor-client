@@ -67,10 +67,10 @@ jobs:
         run: |
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
-      - name: Configure Modrinth repository
+      - name: Configure dependency repositories
         shell: bash
         run: |
-          cat > "$RUNNER_TEMP/modrinth.init.gradle" <<'EOF'
+          cat > "$RUNNER_TEMP/build-fixes.init.gradle" <<'EOF'
           allprojects {
               repositories {
                   exclusiveContent {
@@ -86,13 +86,23 @@ jobs:
                       }
                   }
               }
+
+              configurations.configureEach {
+                  resolutionStrategy.dependencySubstitution {
+                      substitute module(
+                          "maven.modrinth:lithium:mc1.21.1-0.14.0-beta.1"
+                      ) using module(
+                          "maven.modrinth:lithium:mc1.21.1-0.14.0-beta.1-fabric"
+                      )
+                  }
+              }
           }
           EOF
 
       - name: Build
         run: |
           ./gradlew build \
-            --init-script "$RUNNER_TEMP/modrinth.init.gradle" \
+            --init-script "$RUNNER_TEMP/build-fixes.init.gradle" \
             --refresh-dependencies \
             -Pcommit=${{ steps.commit.outputs.sha }}
             
